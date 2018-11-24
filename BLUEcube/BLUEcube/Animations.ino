@@ -15,6 +15,14 @@ void CubeAllOff(){
 }
 
 
+void DrawLayer(int8_t z)
+{
+  // Spit out all 64 bits for the layer.
+  for (int8_t y = 0; y < 8; y++) {
+    shiftOut(bluedata, blueclock, MSBFIRST, ~cube[y][z]); // Push Most significant BYTE first
+  }
+}
+
 /* Drawing Functions */
 void Shape_T(int z) {
   DrawLine3D(3, 3, z, 3, 5, z);

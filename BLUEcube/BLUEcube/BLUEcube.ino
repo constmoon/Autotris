@@ -18,6 +18,7 @@ int index[100];
 int data = 0;
 int8_t patt;
 int8_t level = 0;
+int8_t gZ = 0;
  
 //-- Cube --
 int8_t grid[5][5][6];
@@ -77,6 +78,7 @@ void setup(void) {
   SetupPins();
   Serial.begin(9600);
   CubeAllOff();
+  SetupTimer();
 }
 
 void loop() {
