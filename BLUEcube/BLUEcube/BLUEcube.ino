@@ -4,6 +4,14 @@
  *  
  */
 //-- Shift Register pins --
+int redlatch = 10; 
+int redclock = 11; 
+int reddata  = 9; 
+
+int greenlatch = A1; 
+int greenclock = A2; 
+int greendata  = A0;
+
 int bluelatch = A1; // Arduino D13 to IC pin 12 (ST_CP) -- White
 int blueclock = A2; // Arduino D12 to IC pin 11 (SH_CP) -- Yelow
 int bluedata  = A0; // Arduino D11 to IC pin 14 (DS) -- Blue
@@ -14,18 +22,32 @@ boolean pushed = false;
 int select = 0;
 int8_t gridFloor[6][5]; // z,y
 
+
 int index[100];
 int data = 0;
 int8_t patt;
 int8_t level = 0;
-int8_t gZ = 0;
  
-//-- Cube --
+//-- Preferences --
+int baudRate = 9600;
+byte slomo = 0;
 int8_t grid[5][5][6];
 int stack[2][7] = {0, };   // stack{중복 여부, 현재 층수} * 7(도형 개수만큼)
 int cnt[7]={0, };          // cnt{도}
-int8_t cube[8][8]; // byte bits = X, 1st index=Y, 2nd index = Z
 
+//-- Globals --
+volatile int8_t cube[8][8]; // byte bits = X, 1st index=Y, 2nd index = Z
+volatile int8_t gZ = 0;
+int oldPot0;
+int animSpeed; // Animation speed controlled by pot0
+float pi = 3.14;
+float pi2 = 6.28;
+int8_t prevD = 0; // last depth value
+int8_t drawD = 0; // Last drawn depth
+int8_t dCount = 0;// How many times has the same depth been reported by distance sensor?
+
+const int8_t sineMaxIndex = 32;
+int8_t sineArray[sineMaxIndex];
 
 byte pat[35] = {
 
@@ -72,11 +94,25 @@ byte pat[35] = {
   B11111 
   };
 
+//-- USB Serial commands --
+String inputString = "";         // a string to hold incoming data
+boolean stringComplete = false;  // whether the string is complete
+
+//-- Paths --
+int8_t circle[][2] = {
+  {2, 7}, {3, 7}, {4, 7}, {5, 7}, {6, 6},
+  {7, 5}, {7, 4}, {7, 3}, {7, 2}, {6, 1},
+  {5, 0}, {4, 0}, {3, 0}, {2, 0}, {1, 1},
+  {0, 2}, {0, 3}, {0, 4}, {0, 5}, {1, 6}
+};
+
 
 //-- SETUP --
 void setup(void) {
   SetupPins();
-  Serial.begin(9600);
+  Serial.begin(baudRate);
+  inputString.reserve(600);
+  PreComputes();
   CubeAllOff();
   SetupTimer();
 }
@@ -105,6 +141,49 @@ void tetrisLoop(){
     DropShapes(pushed, select);
   } else {
 //    Serial.println(" Unpushed, ");
+  }
+}
+
+void DrawPatternAtLayer(int pattern_index, int8_t z) {
+  for (int8_t x = 0; x < 5; x++) {
+    for (int8_t y = 0; y < 5; y++) {
+      if (((pat[x + pattern_index * 5] >> y) & 1) == 0) {
+        SetDotWrap(x, y, z);
+      }
+    }
+  }
+}
+
+void EraseGrid(int z) {
+  EraseRect(3, 3, z, 7, 7, z);
+}
+
+void SetDotWrap(int8_t x, int8_t y, int8_t z) {
+  SetDot(x + 3, y + 3, z);
+}
+
+void ClearDotWrap(int8_t x, int8_t y, int8_t z) {
+  ClearDot(x + 3, y + 3, z);
+}
+
+void ClearAll() {
+  for (int8_t x = 0; x < 5; x++) {
+    for (int8_t y = 0; y < 5; y++) {
+      for (int8_t z = 0; z < 6; z++) {
+        ClearDotWrap(x, y, z);
+      }
+    }
+  }
+}
+
+void DrawGrid(int8_t grid){
+  for (int8_t x=0; x<5; x++) {
+    for (int8_t y=0; y<5; y++){
+      for (int8_t z=0; z<6; z++){
+        if (grid == 0)
+          SetDotWrap(x,y,z);
+      }
+    }
   }
 }
 
