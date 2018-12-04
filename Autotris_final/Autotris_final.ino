@@ -155,10 +155,6 @@ void DrawPatternAtLayer(int pattern_index, int8_t z) {
   }
 }
 
-void EraseGrid(int z) {
-  EraseRect(3, 3, z, 7, 7, z);
-}
-
 void SetDotWrap(int8_t x, int8_t y, int8_t z) {
   SetDot(x + 3, y + 3, z);
 }
