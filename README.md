@@ -1,5 +1,4 @@
 # Autotris
-Tetris with RGB LED Cube
 
 더 이상 컨트롤 미숙으로 인한 좌절감은 없다. 
 
